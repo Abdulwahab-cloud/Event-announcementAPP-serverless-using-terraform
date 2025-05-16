@@ -1,0 +1,377 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>EventHub - Manage Your Events</title>
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --primary: #4361ee;
+            --secondary: #3f37c9;
+            --accent: #4895ef;
+            --success: #4cc9f0;
+            --error: #f44336;
+            --warning: #ff9800;
+            --light: #f8f9fa;
+            --dark: #212529;
+            --shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+            --transition: all 0.3s ease;
+        }
+        
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+        }
+        
+        body {
+            font-family: 'Poppins', sans-serif;
+            background: linear-gradient(135deg, #f5f7fa 0%, #c3cfe2 100%);
+            color: var(--dark);
+            min-height: 100vh;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            padding: 20px;
+        }
+        
+        .container {
+            display: flex;
+            gap: 30px;
+            width: 100%;
+            max-width: 1200px;
+            flex-wrap: wrap;
+            justify-content: center;
+        }
+        
+        .card {
+            background: white;
+            padding: 30px;
+            border-radius: 16px;
+            box-shadow: var(--shadow);
+            width: 100%;
+            max-width: 500px;
+            transition: var(--transition);
+            border: 1px solid rgba(255, 255, 255, 0.3);
+            backdrop-filter: blur(10px);
+        }
+        
+        .card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 10px 20px rgba(0, 0, 0, 0.1);
+        }
+        
+        h2 {
+            text-align: center;
+            color: var(--primary);
+            margin-bottom: 25px;
+            font-weight: 600;
+            position: relative;
+        }
+        
+        h2::after {
+            content: '';
+            display: block;
+            width: 60px;
+            height: 3px;
+            background: var(--accent);
+            margin: 10px auto 0;
+            border-radius: 3px;
+        }
+        
+        form {
+            display: flex;
+            flex-direction: column;
+        }
+        
+        .form-group {
+            margin-bottom: 20px;
+            position: relative;
+        }
+        
+        label {
+            display: block;
+            margin-bottom: 8px;
+            font-weight: 500;
+            color: var(--dark);
+        }
+        
+        input, textarea, select {
+            width: 100%;
+            padding: 14px;
+            border: 2px solid #e9ecef;
+            border-radius: 8px;
+            font-family: 'Poppins', sans-serif;
+            font-size: 15px;
+            transition: var(--transition);
+        }
+        
+        input:focus, textarea:focus {
+            outline: none;
+            border-color: var(--accent);
+            box-shadow: 0 0 0 3px rgba(67, 97, 238, 0.2);
+        }
+        
+        textarea {
+            min-height: 100px;
+            resize: vertical;
+        }
+        
+        button {
+            background: var(--primary);
+            color: white;
+            border: none;
+            padding: 14px;
+            border-radius: 8px;
+            font-family: 'Poppins', sans-serif;
+            font-size: 16px;
+            font-weight: 500;
+            cursor: pointer;
+            transition: var(--transition);
+            margin-top: 10px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 8px;
+        }
+        
+        button:hover {
+            background: var(--secondary);
+            transform: translateY(-2px);
+        }
+        
+        button:active {
+            transform: translateY(0);
+        }
+        
+        .notification {
+            position: fixed;
+            top: 30px;
+            left: 50%;
+            transform: translateX(-50%);
+            background: var(--primary);
+            color: white;
+            padding: 15px 25px;
+            border-radius: 8px;
+            box-shadow: var(--shadow);
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            z-index: 1000;
+            opacity: 0;
+            transition: opacity 0.3s ease;
+            pointer-events: none;
+        }
+        
+        .notification.show {
+            opacity: 1;
+        }
+        
+        .notification.success {
+            background: var(--success);
+        }
+        
+        .notification.error {
+            background: var(--error);
+        }
+        
+        .notification.warning {
+            background: var(--warning);
+        }
+        
+        .loader {
+            display: none;
+            width: 20px;
+            height: 20px;
+            border: 3px solid rgba(255, 255, 255, 0.3);
+            border-radius: 50%;
+            border-top-color: white;
+            animation: spin 1s ease-in-out infinite;
+        }
+        
+        @keyframes spin {
+            to { transform: rotate(360deg); }
+        }
+        
+        button.loading .loader {
+            display: inline-block;
+        }
+        
+        @media (max-width: 768px) {
+            .container {
+                flex-direction: column;
+                align-items: center;
+            }
+            
+            .card {
+                max-width: 100%;
+            }
+        }
+    </style>
+</head>
+<body>
+
+    <div class="notification" id="notification">
+        <span id="notification-message">Success!</span>
+    </div>
+
+    <div class="container">
+        <div class="card">
+            <h2>Create New Event</h2>
+            <form id="eventForm">
+                <div class="form-group">
+                    <label for="eventName">Event Name</label>
+                    <input type="text" id="eventName" placeholder="Enter event name" required>
+                </div>
+                
+                <div class="form-group">
+                    <label for="eventDescription">Description</label>
+                    <textarea id="eventDescription" placeholder="Describe your event" required></textarea>
+                </div>
+                
+                <div class="form-group">
+                    <label for="eventDate">Date</label>
+                    <input type="date" id="eventDate" required>
+                </div>
+                
+                <div class="form-group">
+                    <label for="eventLocation">Location</label>
+                    <input type="text" id="eventLocation" placeholder="Where is it happening?" required>
+                </div>
+                
+                <button type="submit" id="createEventBtn">
+                    <span class="loader"></span>
+                    Create Event
+                </button>
+            </form>
+        </div>
+
+        <div class="card">
+            <h2>Stay Updated</h2>
+            <form id="subscriptionForm">
+                <div class="form-group">
+                    <label for="email">Email Address</label>
+                    <input type="email" id="email" placeholder="your@email.com" required>
+                </div>
+                
+                <button type="submit" id="subscribeBtn">
+                    <span class="loader"></span>
+                    Subscribe
+                </button>
+            </form>
+        </div>
+    </div>
+
+    <script>
+        // Enhanced notification system
+        function showNotification(message, type = 'success') {
+            const notification = document.getElementById("notification");
+            const messageEl = document.getElementById("notification-message");
+            
+            notification.className = "notification show " + type;
+            messageEl.textContent = message;
+            
+            setTimeout(() => {
+                notification.classList.remove("show");
+            }, 3000);
+        }
+        
+        // Improved error handling for event creation
+        document.getElementById("eventForm").addEventListener("submit", async function(event) {
+            event.preventDefault();
+            const btn = document.getElementById("createEventBtn");
+            
+            try {
+                btn.classList.add("loading");
+                
+                const data = {
+                    event_name: document.getElementById("eventName").value,
+                    description: document.getElementById("eventDescription").value,
+                    date: document.getElementById("eventDate").value,
+                    location: document.getElementById("eventLocation").value
+                };
+                
+                const response = await fetch("YOUR API URL/events", {
+                    method: "POST",
+                    headers: { "Content-Type": "application/json" },
+                    body: JSON.stringify(data)
+                });
+                
+                if (!response.ok) {
+                    try {
+                        const errorData = await response.json();
+                        showNotification(errorData.message || `Error: ${response.status}`, "error");
+                    } catch (e) {
+                        showNotification(`Request failed with status ${response.status}`, "error");
+                    }
+                    return;
+                }
+                
+                showNotification("Event created successfully!", "success");
+                this.reset();
+                
+            } catch (error) {
+                if (error.name === "TypeError" && error.message.includes("Failed to fetch")) {
+                    showNotification("Network error. Please check your connection.", "error");
+                } else {
+                    showNotification("An unexpected error occurred", "error");
+                }
+                console.error("Error:", error);
+            } finally {
+                btn.classList.remove("loading");
+            }
+        });
+        
+        // Improved error handling for subscriptions
+        document.getElementById("subscriptionForm").addEventListener("submit", async function(event) {
+            event.preventDefault();
+            const btn = document.getElementById("subscribeBtn");
+            
+            try {
+                btn.classList.add("loading");
+                
+                const data = { 
+                    email: document.getElementById("email").value 
+                };
+                
+                const response = await fetch("YOUR API URL/subscription", {
+                    method: "POST",
+                    headers: { "Content-Type": "application/json" },
+                    body: JSON.stringify(data)
+                });
+                
+                if (!response.ok) {
+                    try {
+                        const errorData = await response.json();
+                        showNotification(errorData.message || `Error: ${response.status}`, "error");
+                    } catch (e) {
+                        showNotification(`Request failed with status ${response.status}`, "error");
+                    }
+                    return;
+                }
+                
+                showNotification("Subscription successful! Check your email.", "success");
+                this.reset();
+                
+            } catch (error) {
+                if (error.name === "TypeError" && error.message.includes("Failed to fetch")) {
+                    showNotification("Network error. Please check your connection.", "error");
+                } else {
+                    showNotification("An unexpected error occurred", "error");
+                }
+                console.error("Error:", error);
+            } finally {
+                btn.classList.remove("loading");
+            }
+        });
+        
+        // Set minimum date to today
+        document.getElementById("eventDate").min = new Date().toISOString().split("T")[0];
+    </script>
+
+</body>
+</html>
+   
+                 
+            
